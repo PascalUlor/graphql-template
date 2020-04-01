@@ -1,4 +1,4 @@
-import uuidv4 from 'uuid/v4';
+// import uuidv4 from 'uuid/v4';
 
 /**
  * arguments in the function signature of a GraphQL resolver:
@@ -9,11 +9,11 @@ export default {
      * default resolvers (Implicit Resolvers)
      */
     Query: {
-      messages: (parent, args, { models }) => {
-        return Object.values(models.messages);
+      messages: async (parent, args, { models }) => {
+        return await models.Message.findAll();
       },
-      message: (parent, { id }, { models }) => {
-        return models.messages[id];
+      message: async (parent, { id }, { models }) => {
+        return await models.Message.findByPk(id);
       },
     },
     /**
@@ -21,37 +21,27 @@ export default {
      */
     
     Message: {
-      user: (message, args, { models }) => {
-        return models.users[message.userId];
+      user: async (message, args, { models }) => {
+        return await models.User.findByPk(message.userId);
       },
     },
     Mutation: {
-      createMessage: (parent, { text }, { me, models }) => {
-        const id = uuidv4();
-        const message = {
-          id,
-          text,
-          userId: me.userId
-        };
-        models.messages[id] = message;
-        models.users[me.id].messageIds.push(id);
-  
-        return message;
+      createMessage: async (parent, { text }, { me, models }) => {
+        // const id = uuidv4();
+        return await models.Message.create({
+            text,
+            userId: me.id,
+          });
       },
-      deleteMessage: (parent, { id }, { models }) => {
-        const { [id]: message, ...otherMessages } = models.messages;
-        if(!message) {
-          return false;
-        }
-        models.messages = otherMessages;
-        return true;
+      deleteMessage: async (parent, { id }, { models }) => {
+        return await models.Message.destroy({ where: { id } });
       },
-      updateMessage: (parent, { id, text }, { models}) => {
-        const { [id]: message, ...otherMessages } = models.messages;
-        if(message) {
-          message.text = text;
-        }
-        return message;
-      }
+    //   updateMessage: (parent, { id, text }, { models}) => {
+    //     const { [id]: message, ...otherMessages } = models.messages;
+    //     if(message) {
+    //       message.text = text;
+    //     }
+    //     return message;
+    //   }
     },
   };

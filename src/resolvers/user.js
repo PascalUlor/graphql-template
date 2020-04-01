@@ -7,28 +7,30 @@ export default {
      * default resolvers (Implicit Resolvers)
      */
     Query: {
-      me: (parent, args, { me }) => {
-        return me;
+      me: async (parent, args, { models, me }) => {
+        return await models.User.findByPk(me.id);
       },
-      user: (parent, { id }, { models }) => {
-        return models.users[id];
+      user: async (parent, { id }, { models }) => {
+        return await models.User.findByPk(id);
       },
-      users: (parent, args, { models }) => {
-        return Object.values(models.users);
+      users: async (parent, args, { models }) => {
+        return await models.User.findAll();
       }
     },
     /**
      * Explicit Resolvers
      */
     User: {
-      username: (user, args, { models }) => {
-        // console.log(parent, '<<<<<<<<<')
-        return `Name is ${user.username} age is ${user.age}`;
-      },
-      messages: (user, args, { models }) => {
-          return Object.values(models.messages).filter(
-            msg => msg.userId === user.id,
-          );
+    //   username: (user, args, { models }) => {
+    //     // console.log(parent, '<<<<<<<<<')
+    //     return `Name is ${user.username} age is ${user.age}`;
+    //   },
+      messages: async (user, args, { models }) => {
+          return await models.Message.findAll({
+        where: {
+          userId: user.id,
+        },
+      });
         },
     },
   };

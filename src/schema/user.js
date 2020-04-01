@@ -10,12 +10,6 @@ extend type Query {
     id: ID!
     username: String!
     age: Int!
-    hobbies: Hobbies
     messages: [Message!]
-  }
-  type Hobbies {
-    default: String!
-    fav: String
-    fav2: String
   }
 `;
