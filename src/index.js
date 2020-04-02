@@ -1,22 +1,53 @@
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer, AuthenticationError } from 'apollo-server-express';
+import jwt from 'jsonwebtoken';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import models, { sequelize } from './models';
 import schema from './schema';
 import resolvers from './resolvers';
 
+dotenv.config()
+
 const app = express();
 app.use(cors());
 
-// const me = users[1]
+const getMe = async req => {
+  const token = req.headers['x-token'];
+  if (token) {
+    try {
+      return await jwt.verify(token, process.env.SECRET);
+    } catch (e) {
+      throw new AuthenticationError(
+        'Your session expired'
+      );
+    }
+  }
+};
 
 const server = new ApolloServer({
   typeDefs: schema,
   resolvers,
-  context: async () => ({
+  formatError: error => {
+    // remove the internal sequelize error message
+    // leave only the important validation error
+    const message = error.message
+      .replace('SequelizeValidationError: ', '')
+      .replace('Validation error: ', '');
+    return {
+      ...error,
+      message,
+    };
+  },
+  context: async ({ req }) => {
+    // me: await models.User.findByLogin('pascal'),
+    const me = await getMe(req);
+    return {
     models,
-    me: await models.User.findByLogin('pascal'),
-  }),
+    me,
+    secret: process.env.SECRET
+  };
+  },
 });
 
 server.applyMiddleware({ app, path: '/graphql' });
@@ -26,21 +57,25 @@ const eraseDatabaseOnSync = true;
 
 sequelize.sync({ force: eraseDatabaseOnSync }).then(async () => {
   if (eraseDatabaseOnSync) {
-    createUsersWithMessages();
+    createUsersWithMessages(new Date());
   }
   app.listen({ port: 8000 }, () => {
     console.log('Apollo sever up on http://localhost:8000/graphql');
   });
 });
 
-const createUsersWithMessages = async () => {
+const createUsersWithMessages = async (date) => {
   await models.User.create(
     {
       username: 'pascal',
+      email: 'pc@yahoo.com',
+      password: 'pascal1',
       age: 30,
+      role: 'ADMIN',
       messages: [
         {
           text: 'Published the Road to learn React',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
       ],
     },
@@ -51,13 +86,17 @@ const createUsersWithMessages = async () => {
   await models.User.create(
     {
       username: 'ddavids',
+      email: 'donpc@yahoo.com',
+      password: 'pascal2',
       age: 42,
       messages: [
         {
           text: 'Happy to release ...',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
         {
           text: 'Published a complete ...',
+          createdAt: date.setSeconds(date.getSeconds() + 1),
         },
       ],
     },

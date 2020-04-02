@@ -1,7 +1,11 @@
+import { GraphQLDateTime } from 'graphql-iso-date';
 import userResolver from './user';
 import messageResolver from './message';
 
-export default [userResolver, messageResolver];
+const customeScalarResolver = {
+    Date: GraphQLDateTime,
+}
+export default [userResolver, messageResolver, customeScalarResolver];
 
 // import uuidv4 from 'uuid/v4';
 
