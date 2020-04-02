@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import { ApolloServer, AuthenticationError } from 'apollo-server-express';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
@@ -39,18 +40,27 @@ const server = new ApolloServer({
       message,
     };
   },
-  context: async ({ req }) => {
+  context: async ({ req, connection }) => {
     // me: await models.User.findByLogin('pascal'),
-    const me = await getMe(req);
-    return {
-    models,
-    me,
-    secret: process.env.SECRET
-  };
+    if (connection) {
+      return {
+        models
+      }
+    }
+    if(req) {
+      const me = await getMe(req);
+      return {
+      models,
+      me,
+      secret: process.env.SECRET
+    };
+    }
   },
 });
 
 server.applyMiddleware({ app, path: '/graphql' });
+const httpServer = http.createServer(app);
+server.installSubscriptionHandlers(httpServer);
 
 const eraseDatabaseOnSync = true;
 
@@ -59,7 +69,7 @@ sequelize.sync({ force: eraseDatabaseOnSync }).then(async () => {
   if (eraseDatabaseOnSync) {
     createUsersWithMessages(new Date());
   }
-  app.listen({ port: 8000 }, () => {
+  httpServer.listen({ port: 8000 }, () => {
     console.log('Apollo sever up on http://localhost:8000/graphql');
   });
 });

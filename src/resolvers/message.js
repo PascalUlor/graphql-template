@@ -3,6 +3,7 @@ import { ForbiddenError } from 'apollo-server';
 import Sequelize from 'sequelize';
 import { combineResolvers } from 'graphql-resolvers';
 import { isAuthenticated, isMessageOwner } from './authorization';
+import pubsub, { EVENTS } from '../subscription';
 
 
 const toCursorHash = string => Buffer.from(string).toString('base64');
@@ -61,10 +62,14 @@ export default {
         async (parent, { text }, { me, models }) => {
           // const id = uuidv4();
           try{
-              return await models.Message.create({
+              const message = await models.Message.create({
                   text,
                   userId: me.id,
                 });
+                pubsub.publish(EVENTS.MESSAGE.CREATED, { 
+                  messageCreated: { message },
+                });
+              return message;
           } catch(err) {
               throw new Error(err);
           }
@@ -86,4 +91,9 @@ export default {
     //     return message;
     //   }
     },
+    Subscription: {
+      messageCreated: {
+        subscribe: () => pubsub.asyncIterator(EVENTS.MESSAGE.CREATED),
+      }
+    }
   };
