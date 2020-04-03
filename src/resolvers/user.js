@@ -51,13 +51,15 @@ export default {
     Mutation: {
       signUp: async (
         parent,
-        { username, email, password },
+        { username, email, password, age, role='RegUser' },
         { models, secret },
       ) => {
         const user = await models.User.create({
           username,
           email,
-          password
+          password,
+          age,
+          role,
         });
         return { token: createToken(user, secret, '1hr') };
       },

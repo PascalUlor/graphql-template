@@ -100,6 +100,7 @@ const createUsersWithMessages = async (date) => {
       email: 'donpc@yahoo.com',
       password: 'pascal2',
       age: 42,
+      role: 'RegUser',
       messages: [
         {
           text: 'Happy to release ...',

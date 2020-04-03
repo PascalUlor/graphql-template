@@ -12,6 +12,7 @@ extend type Query {
       username: String!
       email: String!
       password: String!
+      age: Int!
     ): Token!
 
     signIn(login: String!, password: String!): Token!
