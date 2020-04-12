@@ -52,8 +52,9 @@ export default {
      */
     
     Message: {
-      user: async (message, args, { models }) => {
-        return await models.User.findByPk(message.userId);
+      user: async (message, args, { models,loaders }) => {
+        // return await models.User.findByPk(message.userId);
+        return await loaders.user.load(message.userId)
       },
     },
     Mutation: {

@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import DataLoader from 'dataloader';
 import { ApolloServer, AuthenticationError } from 'apollo-server-express';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
@@ -7,12 +8,19 @@ import dotenv from 'dotenv';
 import models, { sequelize } from './models';
 import schema from './schema';
 import resolvers from './resolvers';
+import loaders from './loaders';
 
 dotenv.config()
 
 const app = express();
 app.use(cors());
 
+/**
+ * Verify user token
+ *
+ * @param {*} req
+ * @returns
+ */
 const getMe = async req => {
   const token = req.headers['x-token'];
   if (token) {
@@ -44,7 +52,10 @@ const server = new ApolloServer({
     // me: await models.User.findByLogin('pascal'),
     if (connection) {
       return {
-        models
+        models,
+        loaders: {
+          user: new DataLoader(keys => loaders.user.batchUsers(keys, models)),
+        }
       }
     }
     if(req) {
@@ -52,7 +63,10 @@ const server = new ApolloServer({
       return {
       models,
       me,
-      secret: process.env.SECRET
+      secret: process.env.SECRET,
+      loaders: {
+        user: new DataLoader(keys => loaders.user.batchUsers(keys, models)),
+      }
     };
     }
   },
