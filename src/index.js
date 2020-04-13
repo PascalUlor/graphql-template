@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import DataLoader from 'dataloader';
+import redis from 'redis';
 import { ApolloServer, AuthenticationError } from 'apollo-server-express';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
@@ -14,6 +15,17 @@ dotenv.config()
 
 const app = express();
 app.use(cors());
+
+const client = redis.createClient({
+  port: 6379,
+  host: 'localhost',
+  password: process.env.DATABASE_PASSWORD
+})
+
+
+client.on("error", function(error) {
+  console.error(error);
+});
 
 /**
  * Verify user token
