@@ -10,22 +10,31 @@ import models, { sequelize } from './models';
 import schema from './schema';
 import resolvers from './resolvers';
 import loaders from './loaders';
+import { exec } from 'child_process'
 
 dotenv.config()
 
 const app = express();
 app.use(cors());
 
+const puts = (error, stdout) =>{
+  console.log(error)
+  console.log(stdout)
+  }
+exec('redis-server', puts)
+
 const client = redis.createClient({
   port: 6379,
-  host: 'localhost',
-  password: process.env.DATABASE_PASSWORD
+  host: 'localhost'
 })
 
 
 client.on("error", function(error) {
   console.error(error);
 });
+
+// clear cache
+client.del('Message');
 
 /**
  * Verify user token
@@ -64,6 +73,7 @@ const server = new ApolloServer({
     // me: await models.User.findByLogin('pascal'),
     if (connection) {
       return {
+        client,
         models,
         loaders: {
           user: new DataLoader(keys => loaders.user.batchUsers(keys, models)),
@@ -73,6 +83,7 @@ const server = new ApolloServer({
     if(req) {
       const me = await getMe(req);
       return {
+      client,
       models,
       me,
       secret: process.env.SECRET,
