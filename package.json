@@ -30,6 +30,7 @@
     "uuid": "^7.0.2"
   },
   "devDependencies": {
+    "@babel/compat-data": "^7.9.0",
     "@babel/core": "^7.2.2",
     "@babel/node": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
